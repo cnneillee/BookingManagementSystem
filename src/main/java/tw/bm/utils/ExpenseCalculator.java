@@ -1,7 +1,5 @@
 package tw.bm.utils;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import tw.bm.Booking;
 
 import java.util.Date;
@@ -31,7 +29,6 @@ import java.util.Date;
  * @date 2017/9/9.
  */
 public class ExpenseCalculator {
-    private static Logger logger = LogManager.getLogger(ExpenseCalculator.class);
 
     /**
      * According to the standards to calculate expense of a booking.
@@ -48,17 +45,8 @@ public class ExpenseCalculator {
         boolean isWeekend = Utils.isWeekend(date);
         int price = getPrice(isWeekend, from, to);
         float rate = getRate(isWeekend, canceled);
-        int lenInHour = from.hour - to.hour;
 
-        int expense = (int) (lenInHour * price * rate);
-        logger.debug("Calculate booking %s:\n\t" +
-                "isWeekend: %s\n\t" + isWeekend +
-                "price: %s\n\t" + price +
-                "rate: %s\n\t" + rate +
-                "lenInHour: %s\n" + lenInHour
-        );
-
-        return expense;
+        return (int) (price * rate);
     }
 
     private static float getRate(boolean isWeekend, boolean canceled) {
@@ -70,29 +58,45 @@ public class ExpenseCalculator {
     private static int getPrice(boolean isWeekend, Clock from, Clock to) {
         int price = 0;
         if (isWeekend) {
-            if (from.compareTo(new Clock(9, 0)) >= 0 &&
-                    to.compareTo(new Clock(12, 0)) <= 0) {
-                price = 40;
-            } else if (from.compareTo(new Clock(12, 0)) >= 0 &&
-                    to.compareTo(new Clock(18, 0)) <= 0) {
-                price = 50;
-            } else if (from.compareTo(new Clock(18, 0)) >= 0 &&
-                    to.compareTo(new Clock(22, 0)) <= 0) {
-                price = 60;
+            // 计算第一个区段
+            if (from.hour >= 9 && from.hour < 12) {
+                int len1 = Math.min(12, to.hour) - from.hour;
+                price += len1 * 40;
+            }
+            // 计算第二个区段
+            if (from.hour < 18 && to.hour > 12) {
+                int len2 = Math.min(to.hour, 18) - Math.max(from.hour, 12);
+                price += len2 * 50;
+            }
+
+            // 计算第三个区段
+            if (to.hour > 18 && from.hour <= 22) {
+                int len3 = to.hour - Math.max(from.hour, 18);
+                price += len3 * 60;
             }
         } else {
-            if (from.compareTo(new Clock(9, 0)) >= 0 &&
-                    to.compareTo(new Clock(12, 0)) <= 0) {
-                price = 30;
-            } else if (from.compareTo(new Clock(12, 0)) >= 0 &&
-                    to.compareTo(new Clock(18, 0)) <= 0) {
-                price = 50;
-            } else if (from.compareTo(new Clock(18, 0)) >= 0 &&
-                    to.compareTo(new Clock(20, 0)) <= 0) {
-                price = 80;
-            } else if (from.compareTo(new Clock(20, 0)) >= 0 &&
-                    to.compareTo(new Clock(22, 0)) <= 0) {
-                price = 60;
+            // 计算第一个区段
+            if (from.hour >= 9 && from.hour < 12) {
+                int len1 = Math.min(12, to.hour) - from.hour;
+                price += len1 * 30;
+            }
+
+            // 计算第二个区段
+            if (!(to.hour <= 12 || from.hour >= 18)) {
+                int len2 = Math.min(to.hour, 18) - Math.max(from.hour, 12);
+                price += len2 * 50;
+            }
+
+            // 计算第三个区段
+            if (!(to.hour <= 18 || from.hour >= 20)) {
+                int len2 = Math.min(to.hour, 20) - Math.max(from.hour, 18);
+                price += len2 * 80;
+            }
+
+            // 计算第四个区段
+            if (to.hour > 20 && from.hour <= 22) {
+                int len3 = to.hour - Math.max(from.hour, 20);
+                price += len3 * 60;
             }
         }
         return price;

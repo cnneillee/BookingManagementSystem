@@ -1,11 +1,7 @@
 package tw.bm;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import tw.bm.exception.BookingConflictException;
-import tw.bm.exception.DecodeException;
+import tw.bm.exception.BookingException;
 import tw.bm.exception.IllegalInputException;
-import tw.bm.utils.PrintUtil;
 
 import java.util.Scanner;
 
@@ -14,24 +10,22 @@ import java.util.Scanner;
  * @date 2017/9/8.
  */
 public class Badminton {
-    private static Logger logger = LogManager.getLogger(Badminton.class);
-
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
         while (sc.hasNextLine()) {
             String line = sc.nextLine();
+            if (line.equals("")) break;
             try {
                 Booking booking = decodeFromStrArr(line);
                 BookManager.getInstance().handleBooking(booking);
-                PrintUtil.info("Success: the booking is accepted!");
-            } catch (IllegalInputException | BookingConflictException e) {
-                PrintUtil.error(e.getMessage());
-                logger.info("Error: booking error due to\n\t" + e.getMessage());
-            } catch (DecodeException | IllegalStateException | IllegalArgumentException e) {
-                logger.error(e.getMessage());
+                System.out.println("Success: the booking is accepted!");
+            } catch (IllegalInputException | BookingException e) {
+                System.out.println(e.getMessage());
+            } catch (IllegalStateException | IllegalArgumentException e) {
+                e.printStackTrace();
             }
         }
-        PrintUtil.out(BookManager.getInstance().settle());
+        System.out.println(BookManager.getInstance().settle());
     }
 
     /**
@@ -41,7 +35,7 @@ public class Badminton {
      * @param line input
      * @return decoded book record
      */
-    private static Booking decodeFromStrArr(String line) throws DecodeException, IllegalInputException {
+    private static Booking decodeFromStrArr(String line) throws IllegalInputException {
         String[] lineArr = line.split(" ");
         int len = lineArr.length;
         boolean cancel = false;

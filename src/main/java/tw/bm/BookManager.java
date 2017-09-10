@@ -1,8 +1,7 @@
 package tw.bm;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import tw.bm.exception.BookingConflictException;
+import tw.bm.exception.BookingException;
+import tw.bm.exception.IllegalInputException;
 
 import java.util.*;
 
@@ -11,7 +10,6 @@ import java.util.*;
  * @date 2017/9/8.
  */
 public class BookManager {
-    private static Logger logger = LogManager.getLogger(BookManager.class);
     /**
      * Store all of the booking records.
      * KEY represents the place, reflect to VALUE which represents booking list in this place.
@@ -28,6 +26,12 @@ public class BookManager {
     }
 
     private BookManager() {
+        // Suppose that there are four places(A,B,C,D).
+        bookingInfoBase = new HashMap<>();
+        bookingInfoBase.put("A", new ArrayList<Booking>());
+        bookingInfoBase.put("B", new ArrayList<Booking>());
+        bookingInfoBase.put("C", new ArrayList<Booking>());
+        bookingInfoBase.put("D", new ArrayList<Booking>());
     }
 
     /**
@@ -35,30 +39,21 @@ public class BookManager {
      *
      * @param booking a standardized booking
      */
-    public void handleBooking(Booking booking) throws IllegalStateException, BookingConflictException {
+    public void handleBooking(Booking booking) throws IllegalStateException, BookingException, IllegalInputException {
         if (booking == null) return;
-        if (this.bookingInfoBase == null)
-            this.bookingInfoBase = new HashMap<>();
 
         String place = booking.getPlace();
         boolean cancel = booking.isCanceled();
         List<Booking> bookingList = this.bookingInfoBase.get(place);
 
         if (cancel && bookingList == null) {// Cancel from a null list is illegal.
-            logger.error("IllegalState: cannot cancel from a null list");
             throw new IllegalStateException("IllegalState: cannot cancel from a null list");
         } else if (bookingList == null) {
-            bookingList = new ArrayList<>();
-            this.bookingInfoBase.put(place, bookingList);
-            bookingList.add(booking);
-//          addBooking(booking, bookingList);
-            logger.info("Create list of place %s, and add booking", place, booking);
+            throw new IllegalInputException("Error: Badminton stadium not offer place " + booking.getPlace());
         } else if (!cancel) {// add booking
             addBooking(booking, bookingList);
-            logger.info("Add booking %s to place %s", booking, place);
         } else {// cancel booking
             cancelBooking(booking, bookingList);
-            logger.info("Successfully cancel booking %s", booking);
         }
     }
 
@@ -68,7 +63,7 @@ public class BookManager {
      * @param booking     booking to be added
      * @param bookingList booking list
      */
-    private void addBooking(Booking booking, List<Booking> bookingList) throws BookingConflictException {
+    private void addBooking(Booking booking, List<Booking> bookingList) throws BookingException {
         // check conflict
         for (Booking br : bookingList) {
             // will not conflict with canceled booking
@@ -76,7 +71,7 @@ public class BookManager {
             // will not conflict with not overlapping booking
             if (!booking.isOverlapping(br)) continue;
 
-            throw new BookingConflictException("Error: the booking conflicts with existing bookings!");
+            throw new BookingException("Error: the booking conflicts with existing bookings!");
         }
 
         // add booking without conflicts
@@ -90,54 +85,50 @@ public class BookManager {
      * @param booking     booking to be canceled
      * @param bookingList booking list
      */
-    private void cancelBooking(Booking booking, List<Booking> bookingList) throws IllegalStateException {
+    private void cancelBooking(Booking booking, List<Booking> bookingList) throws BookingException {
         Booking toCancel = null;
         // match the booking
         for (Booking br : bookingList) {
-            if (!br.equals(booking)) continue;
+            if (br.isCanceled() || !br.equals(booking)) continue;
 
             toCancel = br;
             break;
         }
 
         // cancel the booking
-        if (toCancel != null) {
-            toCancel.cancel();
-        } else {
-            logger.debug("Fail to cancel booking %s, due to not match", booking);
-        }
+        if (toCancel != null) toCancel.cancel();
+        else throw new BookingException("Error: the booking being cancelled does not exist!");
     }
 
     /**
      * Settle the income in detail.
      */
     public String settle() {
+        if (bookingInfoBase == null) return "";
         StringBuilder output = new StringBuilder();
-        output.append("收⼊汇总\n").append("---");
-        float incomeTotal = 0;
+        output.append("收⼊汇总\n").append("---\n");
+        double incomeTotal = 0;
 
         // iterate all of booking records
         for (Map.Entry<String, List<Booking>> e : bookingInfoBase.entrySet()) {
             String place = e.getKey();
-            output.append("场地：").append(place);
+            output.append("场地:").append(place).append("\n");
             List<Booking> bookings = e.getValue();
             // sort booking list
             Collections.sort(bookings);
             float income = 0;
             for (Booking b : bookings) {
                 // append each booking record in detail
-                output.append(b);
+                output.append(b).append("\n");
                 // calculate the income in certain place
                 income += b.getExpense();
             }
             // calculate the total income in this stadium
             incomeTotal += income;
-            output.append("小计：").append(income).append("元").append("\n");
+            output.append("小计：").append(income).append("元").append("\n\n");
         }
         output.append("---").append("\n");
         output.append("总计：").append(incomeTotal).append("元").append("\n");
-        System.out.println(output.toString());
-        logger.info("Settle the general journal:\n%s", output.toString());
         return output.toString();
     }
 }

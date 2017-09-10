@@ -1,8 +1,5 @@
 package tw.bm;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import tw.bm.exception.DecodeException;
 import tw.bm.exception.IllegalInputException;
 import tw.bm.utils.Clock;
 import tw.bm.utils.ExpenseCalculator;
@@ -18,9 +15,7 @@ public class Booking implements Overlapping, Comparable<Booking> {
     private Clock to;
     private String place;
     private boolean isCanceled;
-    private float income = -1;
-
-    private static Logger logger = LogManager.getLogger(Booking.class);
+    private int income = -1;
 
     public Booking(String user, String place, boolean isCanceled,
                    Date date, Clock from, Clock to) {
@@ -52,7 +47,7 @@ public class Booking implements Overlapping, Comparable<Booking> {
         return place;
     }
 
-    public float getExpense() {
+    public int getExpense() {
         if (income < 0)
             income = ExpenseCalculator.calExpense(this);
         return income;
@@ -64,7 +59,6 @@ public class Booking implements Overlapping, Comparable<Booking> {
 
     public void cancel() throws IllegalStateException {
         if (isCanceled) {
-            logger.error("IllegalOperate: cannot cancel duplicately\n\t%s", this.toString());
             throw new IllegalStateException("IllegalOperate: cannot cancel duplicately");
         }
         this.isCanceled = true;
@@ -110,7 +104,7 @@ public class Booking implements Overlapping, Comparable<Booking> {
         sb.append(date).append(" ");
         sb.append(from).append("~").append(to).append(" ");
         if (this.isCanceled) sb.append("违约金").append(" ");
-        float expense = getExpense();
+        int expense = getExpense();
         sb.append(expense);
         return sb.toString();
     }
@@ -123,8 +117,6 @@ public class Booking implements Overlapping, Comparable<Booking> {
         String place = null;
         boolean isCancel = false;
 
-        private static Logger logger = LogManager.getLogger(BookingBuilder.class);
-
         public BookingBuilder() {
         }
 
@@ -133,23 +125,20 @@ public class Booking implements Overlapping, Comparable<Booking> {
             return this;
         }
 
-        public BookingBuilder bookDate(String bookDate) throws DecodeException {
+        public BookingBuilder bookDate(String bookDate) throws IllegalInputException {
             try {
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
                 date = sdf.parse(bookDate);
             } catch (ParseException e) {
-                logger.error("Failed to decode date from: %s", bookDate);
-                throw new DecodeException("Failed to decode date from: " + bookDate);
+                throw new IllegalInputException("Error: the booking is invalid!");
             }
-            logger.info("Set booking date on %s", date);
             return this;
         }
 
-        public BookingBuilder period(String period) throws DecodeException, IllegalInputException {
+        public BookingBuilder period(String period) throws IllegalInputException {
             String[] fromAndTo = period.split("~");
             if (fromAndTo.length != 2) {
-                logger.error("Failed to decode period from {%s}", period);
-                throw new DecodeException("Failed to decode period from: " + period);
+                throw new IllegalInputException("Error: the booking is invalid!");
             }
             String toStr = fromAndTo[1];
             String fromStr = fromAndTo[0];
@@ -158,18 +147,16 @@ public class Booking implements Overlapping, Comparable<Booking> {
             from = Clock.fromStr(fromStr);
 
             if (to.compareTo(from) > 0) {
-                logger.info("Set booking period between from %s to %s", from, to);
                 return this;
             } else {
-                logger.error("Failed to decode period from %s", period);
-                throw new IllegalInputException("Failed to decode period from: " + period);
+                throw new IllegalInputException("Error: the booking is invalid!");
             }
         }
 
-        public BookingBuilder cancel(String flag) throws DecodeException {
+        public BookingBuilder cancel(String flag) throws IllegalInputException {
             if (flag == null || flag.equals("")) isCancel = false;
             else if (flag.equals("C")) isCancel = true;
-            else throw new DecodeException("Failed to decode cancel flag from: " + flag);
+            else throw new IllegalInputException("Error: the booking is invalid!");
             return this;
         }
 
@@ -180,12 +167,9 @@ public class Booking implements Overlapping, Comparable<Booking> {
 
         public Booking create() {
             if (user == null || place == null || date == null || from == null || to == null) {
-                logger.error("Error in creating booking due to some basic info not set");
                 throw new IllegalArgumentException("USER is null!");
             }
-            Booking b = new Booking(user, place, isCancel, date, from, to);
-            logger.info("Successfully create booking %s", b);
-            return b;
+            return new Booking(user, place, isCancel, date, from, to);
         }
     }
 }
