@@ -110,7 +110,11 @@ public class BookManager {
         double incomeTotal = 0;
 
         // iterate all of booking records
-        for (Map.Entry<String, List<Booking>> e : bookingInfoBase.entrySet()) {
+        Set set = bookingInfoBase.entrySet();
+        Iterator<Map.Entry<String, List<Booking>>> it = set.iterator();
+        int N = set.size();
+        for (int i = 0; it.hasNext(); i++) {
+            Map.Entry<String, List<Booking>> e = it.next();
             String place = e.getKey();
             output.append("场地:").append(place).append("\n");
             List<Booking> bookings = e.getValue();
@@ -125,10 +129,11 @@ public class BookManager {
             }
             // calculate the total income in this stadium
             incomeTotal += income;
-            output.append("小计：").append(income).append("元").append("\n\n");
+            output.append("小计：").append(income).append("元").append("\n");
+            if (i + 1 < N) output.append("\n");
         }
         output.append("---").append("\n");
-        output.append("总计：").append(incomeTotal).append("元").append("\n");
+        output.append("总计：").append(incomeTotal).append("元");
         return output.toString();
     }
 }

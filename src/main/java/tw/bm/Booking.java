@@ -8,6 +8,12 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+/**
+ * Booking
+ * {@link #income} to cache calculate result.
+ * {@link #cancel()}try to cancel the booking, if has been canceled, throws {@link IllegalStateException}.
+ * Implements {@link Overlapping} ,{@link Comparable}. Overwrite {@link #equals(Object)} method.
+ */
 public class Booking implements Overlapping, Comparable<Booking> {
     private String user;
     private Date date;
@@ -109,6 +115,9 @@ public class Booking implements Overlapping, Comparable<Booking> {
         return sb.toString();
     }
 
+    /**
+     * Builder of booking.
+     */
     public static class BookingBuilder {
         String user = null;
         Date date = null;
@@ -174,6 +183,9 @@ public class Booking implements Overlapping, Comparable<Booking> {
     }
 }
 
+/**
+ * Determine weather two booking overlapping
+ */
 interface Overlapping {
     boolean isOverlapping(Booking br);
 }

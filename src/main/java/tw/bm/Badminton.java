@@ -3,6 +3,7 @@ package tw.bm;
 import tw.bm.exception.BookingException;
 import tw.bm.exception.IllegalInputException;
 
+import java.io.*;
 import java.util.Scanner;
 
 /**
@@ -11,7 +12,21 @@ import java.util.Scanner;
  */
 public class Badminton {
     public static void main(String[] args) {
-        Scanner sc = new Scanner(System.in);
+        Scanner sc = null;
+        File file = null;
+        if (args.length == 2) {
+            try {
+                sc = new Scanner(new FileInputStream(args[0]));
+                file = new File(args[1]);
+            } catch (FileNotFoundException e) {
+                System.out.printf("File with path %s not exist\n", args[0]);
+                return;
+            }
+        } else {
+            sc = new Scanner(System.in);
+            file = new File("output.txt");
+        }
+
         while (sc.hasNextLine()) {
             String line = sc.nextLine();
             if (line.equals("")) break;
@@ -25,7 +40,16 @@ public class Badminton {
                 e.printStackTrace();
             }
         }
-        System.out.println(BookManager.getInstance().settle());
+        String outPut = BookManager.getInstance().settle();
+//        System.out.println(outPut);
+        try {
+            BufferedWriter bw = new BufferedWriter(new FileWriter(file));
+            bw.write(outPut, 0, outPut.length());
+            bw.flush();
+            bw.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
