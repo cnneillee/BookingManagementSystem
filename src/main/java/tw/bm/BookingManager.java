@@ -9,7 +9,7 @@ import java.util.*;
  * @author Neil
  * @date 2017/9/8.
  */
-public class BookManager {
+public class BookingManager {
     /**
      * Store all of the booking records.
      * KEY represents the place, reflect to VALUE which represents booking list in this place.
@@ -19,13 +19,13 @@ public class BookManager {
     /**
      * singleton mode
      */
-    private static BookManager ourInstance = new BookManager();
+    private static BookingManager ourInstance = new BookingManager();
 
-    public static BookManager getInstance() {
+    public static BookingManager getInstance() {
         return ourInstance;
     }
 
-    private BookManager() {
+    private BookingManager() {
         // Suppose that there are four places(A,B,C,D).
         bookingInfoBase = new HashMap<>();
         bookingInfoBase.put("A", new ArrayList<Booking>());
@@ -49,7 +49,7 @@ public class BookManager {
         if (cancel && bookingList == null) {// Cancel from a null list is illegal.
             throw new IllegalStateException("IllegalState: cannot cancel from a null list");
         } else if (bookingList == null) {
-            throw new IllegalInputException("Error: Badminton stadium not offer place " + booking.getPlace());
+            throw new IllegalInputException("Error: MainBooking stadium not offer place " + booking.getPlace());
         } else if (!cancel) {// add booking
             addBooking(booking, bookingList);
         } else {// cancel booking

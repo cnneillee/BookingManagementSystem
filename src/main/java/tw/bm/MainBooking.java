@@ -7,16 +7,22 @@ import java.io.*;
 import java.util.Scanner;
 
 /**
+ * The main class
+ *
  * @author Neil
  * @date 2017/9/8.
  */
-public class Badminton {
+public class MainBooking {
+    /**
+     * main method, two args(in and out file path) or none(in or out based on console).
+     * @param args program args
+     */
     public static void main(String[] args) {
         Scanner sc = null;
         File file = null;
         if (args.length == 2) {
             try {
-                sc = new Scanner(new FileInputStream(args[0]));
+                sc = new Scanner(new FileInputStream(args[0]), "utf-8");
                 file = new File(args[1]);
             } catch (FileNotFoundException e) {
                 System.out.printf("File with path %s not exist\n", args[0]);
@@ -32,7 +38,7 @@ public class Badminton {
             if (line.equals("")) break;
             try {
                 Booking booking = decodeFromStrArr(line);
-                BookManager.getInstance().handleBooking(booking);
+                BookingManager.getInstance().handleBooking(booking);
                 System.out.println("Success: the booking is accepted!");
             } catch (IllegalInputException | BookingException e) {
                 System.out.println(e.getMessage());
@@ -40,7 +46,7 @@ public class Badminton {
                 e.printStackTrace();
             }
         }
-        String outPut = BookManager.getInstance().settle();
+        String outPut = BookingManager.getInstance().settle();
 //        System.out.println(outPut);
         try {
             BufferedWriter bw = new BufferedWriter(new FileWriter(file));
@@ -53,7 +59,7 @@ public class Badminton {
     }
 
     /**
-     * {⽤户ID} {预订⽇期 yyyy-MM-dd} {预订时间段 HH:mm~HH:mm} {场地} {取消标记} ，
+     * {⽤户ID} {预订⽇期 yyyy-MM-dd} {预订时间段 HH:mm~HH:mm} {场地} {取消标记}
      * U123 2016-06-02 20:00~22:00 A C ，
      *
      * @param line input

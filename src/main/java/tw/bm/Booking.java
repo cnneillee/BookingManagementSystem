@@ -155,7 +155,7 @@ public class Booking implements Overlapping, Comparable<Booking> {
             to = Clock.fromStr(toStr);
             from = Clock.fromStr(fromStr);
 
-            if (to.compareTo(from) > 0) {
+            if (to.minute == 0 && from.minute == 0 && to.compareTo(from) > 0) {
                 return this;
             } else {
                 throw new IllegalInputException("Error: the booking is invalid!");
